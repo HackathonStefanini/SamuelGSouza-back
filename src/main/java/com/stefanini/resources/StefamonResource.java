@@ -25,6 +25,7 @@ public class StefamonResource {
 
     @GET
     @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response pegarPorId(@PathParam("id") Long id) {
         return Response.status(Response.Status.OK).entity(service.pegarPorId(id)).build();
     }
