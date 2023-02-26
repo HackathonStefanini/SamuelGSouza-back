@@ -1,8 +1,11 @@
 package com.stefanini.service;
 
+import com.stefanini.dto.JogadorDTO;
 import com.stefanini.entity.Jogador;
 import com.stefanini.exceptions.RegraDeNegocioException;
+import com.stefanini.parser.JogadorParser;
 import com.stefanini.repository.JogadorRepository;
+import com.stefanini.utils.Criptografia;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -16,16 +19,19 @@ public class JogadorService {
     @Inject
     JogadorRepository jogadorRepository;
 
-    public void salvar(Jogador jogador) {
+    public JogadorDTO salvar(JogadorDTO jogadorDTO) {
+        Jogador jogador = JogadorParser.dtoEntity(jogadorDTO);
+        jogador.setPassword(Criptografia.criptografarSenha(jogador.getPassword()));
         jogadorRepository.save(jogador);
+        return JogadorParser.jogadorEntity(jogador);
     }
 
-    public Jogador pegarPorId(Long id) {
+    public JogadorDTO pegarPorId(Long id) {
         var jogador = jogadorRepository.findById(id);
         if(Objects.isNull(jogador)) {
             throw new RegraDeNegocioException("Ocorreu um erro ao buscar o Jogador de id " + id, Response.Status.NOT_FOUND);
         }
-        return jogador;
+        return JogadorParser.jogadorEntity(jogador);
     }
 
     public void alterar(Jogador jogador) {
@@ -38,5 +44,15 @@ public class JogadorService {
 
     public List<Jogador> listarTodos() {
         return jogadorRepository.listAll();
+    }
+
+    public JogadorDTO verificarCredenciais(String nickname, String senha) {
+        senha = Criptografia.criptografarSenha(senha);
+        Jogador jogador = jogadorRepository.verificarCredenciais(nickname, senha);
+        if(Objects.isNull(jogador)) {
+            throw new RegraDeNegocioException("Credenciais incorretas.", Response.Status.NOT_FOUND);
+        }
+
+        return JogadorParser.jogadorEntity(jogador);
     }
 }
